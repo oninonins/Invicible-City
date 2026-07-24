@@ -1,0 +1,11 @@
+# Environments
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# User specified
+docs/
