@@ -5,6 +5,8 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Cookies from "js-cookie";
 import { Map, LogOut, LayoutDashboard, Settings } from "lucide-react";
+import { GeographicProvider } from "@/context/GeographicContext";
+import CitySelector from "@/components/CitySelector";
 
 export default function DashboardLayout({
   children,
@@ -31,7 +33,8 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="flex min-h-screen">
+    <GeographicProvider>
+      <div className="flex min-h-screen">
       <aside className="w-64 flex-shrink-0 border-r bg-muted/40 hidden md:block">
         <div className="h-16 flex items-center px-6 border-b bg-background">
           <Link className="flex items-center gap-2" href="/dashboard">
@@ -68,8 +71,13 @@ export default function DashboardLayout({
       
       <div className="flex-1 flex flex-col">
         <header className="h-16 flex items-center justify-between px-6 border-b bg-background">
-          <div className="md:hidden">
-            <span className="font-bold">Invisible City</span>
+          <div className="flex items-center gap-4">
+            <div className="md:hidden">
+              <span className="font-bold">Invisible City</span>
+            </div>
+            <div className="border-l pl-4 ml-2">
+              <CitySelector />
+            </div>
           </div>
           <div className="ml-auto flex items-center gap-4">
             <button className="text-muted-foreground hover:text-foreground p-2 rounded-full transition-colors">
@@ -88,6 +96,7 @@ export default function DashboardLayout({
           {children}
         </main>
       </div>
-    </div>
+      </div>
+    </GeographicProvider>
   );
 }

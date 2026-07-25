@@ -6,6 +6,8 @@ class FacilityBase(BaseModel):
     facility_type: str
     lat: float
     lng: float
+    city_id: Optional[int] = None
+    district_id: Optional[int] = None
 
 class FacilityCreate(FacilityBase):
     pass

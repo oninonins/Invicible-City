@@ -38,8 +38,8 @@ export default function LoginPage() {
       Cookies.set("access_token", data.access_token, { expires: 7 }); // 7 days
       
       router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Failed to login");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to login");
     } finally {
       setLoading(false);
     }

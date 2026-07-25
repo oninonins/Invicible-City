@@ -1,10 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.v1 import health, auth, facility, analytics
+from app.api.v1 import health, auth, facility, analytics, city
 from app.db.base import Base
 from app.models.user import User
+from app.models.spatial import Province, City, District
 from app.models.facility import Facility
+from app.models.etl import ETLJob
 from app.db.session import engine
 
 # Create tables (For MVP, later switch to Alembic)
@@ -27,6 +29,7 @@ if settings.BACKEND_CORS_ORIGINS:
 
 app.include_router(health.router, prefix=f"{settings.API_V1_STR}/health", tags=["health"])
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
+app.include_router(city.router, prefix=f"{settings.API_V1_STR}/cities", tags=["cities"])
 app.include_router(facility.router, prefix=f"{settings.API_V1_STR}/facilities", tags=["facilities"])
 app.include_router(analytics.router, prefix=f"{settings.API_V1_STR}/analytics", tags=["analytics"])
 

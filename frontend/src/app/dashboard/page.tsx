@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
+import { useGeographic } from "@/context/GeographicContext";
 
 interface AnalyticsData {
   overall_score: number;
@@ -13,12 +14,16 @@ interface AnalyticsData {
 export default function DashboardPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { selectedCity } = useGeographic();
 
   useEffect(() => {
+    if (!selectedCity) return;
+    
     const fetchAnalytics = async () => {
+      setLoading(true);
       try {
         const token = Cookies.get("access_token");
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/analytics/ufs`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/analytics/ufs?city_id=${selectedCity.id}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -34,14 +39,14 @@ export default function DashboardPage() {
       }
     };
     fetchAnalytics();
-  }, []);
+  }, [selectedCity]);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
         <p className="text-muted-foreground">
-          Welcome to the Invisible City dashboard. View your city's public facility metrics.
+          Welcome to the Invisible City dashboard. View your city&apos;s public facility metrics.
         </p>
       </div>
 

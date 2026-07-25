@@ -1,5 +1,5 @@
 from typing import Any, List, Optional
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.models.facility import Facility
@@ -23,7 +23,8 @@ def create_facility(
         facility_type=facility_in.facility_type,
         lat=facility_in.lat,
         lng=facility_in.lng,
-        geom=geom
+        geom=geom,
+        city_id=facility_in.city_id
     )
     db.add(facility)
     db.commit()
@@ -35,7 +36,8 @@ def read_facilities(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    facility_type: Optional[str] = None
+    facility_type: Optional[str] = None,
+    city_id: Optional[int] = Query(None, description="Filter by city_id")
 ) -> Any:
     """
     Retrieve facilities.
@@ -43,5 +45,7 @@ def read_facilities(
     query = db.query(Facility)
     if facility_type:
         query = query.filter(Facility.facility_type == facility_type)
+    if city_id:
+        query = query.filter(Facility.city_id == city_id)
     facilities = query.offset(skip).limit(limit).all()
     return facilities
