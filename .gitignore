@@ -9,3 +9,35 @@
 
 # User specified
 docs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Experiment / research scripts (one-time use)
+test_pyrosm.py
+backend/scripts/exp2_open.py
+backend/scripts/exp3_filtered.py
+backend/scripts/exp3_jakarta.py
+backend/scripts/exp3_jkt.py
+backend/scripts/poc_pyrosm.py
+backend/scripts/preprocess_dmxsan.py
+backend/scripts/prep_boundary.py
+
+# Raw data — too large for git
+backend/data/
+data/
+
+# External git repos (cloned manually, not submodules)
+New folder/
+
+# OS
+.DS_Store
+Thumbs.db

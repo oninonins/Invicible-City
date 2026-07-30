@@ -13,10 +13,6 @@ def create_facility(
     db: Session = Depends(deps.get_db),
     facility_in: FacilityCreate,
 ) -> Any:
-    """
-    Create new facility.
-    """
-    # Simple WKT conversion for PostGIS POINT geometry
     geom = f"SRID=4326;POINT({facility_in.lng} {facility_in.lat})"
     facility = Facility(
         name=facility_in.name,
@@ -24,7 +20,11 @@ def create_facility(
         lat=facility_in.lat,
         lng=facility_in.lng,
         geom=geom,
-        city_id=facility_in.city_id
+        source=facility_in.source,
+        external_id=facility_in.external_id,
+        raw_tags=facility_in.raw_tags,
+        city_id=facility_in.city_id,
+        district_id=facility_in.district_id,
     )
     db.add(facility)
     db.commit()
@@ -37,15 +37,15 @@ def read_facilities(
     skip: int = 0,
     limit: int = 100,
     facility_type: Optional[str] = None,
-    city_id: Optional[int] = Query(None, description="Filter by city_id")
+    city_id: Optional[int] = Query(None, description="Filter by city_id"),
+    district_id: Optional[int] = Query(None, description="Filter by district_id"),
 ) -> Any:
-    """
-    Retrieve facilities.
-    """
     query = db.query(Facility)
     if facility_type:
         query = query.filter(Facility.facility_type == facility_type)
     if city_id:
         query = query.filter(Facility.city_id == city_id)
+    if district_id:
+        query = query.filter(Facility.district_id == district_id)
     facilities = query.offset(skip).limit(limit).all()
     return facilities
