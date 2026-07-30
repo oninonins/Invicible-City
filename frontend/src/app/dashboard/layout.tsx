@@ -4,7 +4,16 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Cookies from "js-cookie";
-import { Map, LogOut, LayoutDashboard, Settings } from "lucide-react";
+import { 
+  Map, 
+  LogOut, 
+  LayoutDashboard, 
+  BarChart3, 
+  Menu, 
+  X,
+  MapPin,
+  Home
+} from "lucide-react";
 import { GeographicProvider } from "@/context/GeographicContext";
 import CitySelector from "@/components/CitySelector";
 
@@ -15,87 +24,145 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Set demo token secara non-blocking — layout langsung dirender
   useEffect(() => {
-    setMounted(true);
-    const token = Cookies.get("access_token");
-    if (!token) {
-      router.push("/login");
+    if (!Cookies.get("access_token")) {
+      Cookies.set("access_token", "demo_guest_token", { expires: 1 });
     }
-  }, [router]);
-
-  if (!mounted) return null;
+  }, []);
 
   const handleLogout = () => {
     Cookies.remove("access_token");
     router.push("/");
   };
 
+  const navItems = [
+    { href: "/dashboard", label: "Ringkasan", icon: LayoutDashboard },
+    { href: "/dashboard/map", label: "Peta Interaktif", icon: Map },
+    { href: "/dashboard/analysis", label: "Analisis Keadilan", icon: BarChart3 },
+  ];
+
   return (
     <GeographicProvider>
-      <div className="flex min-h-screen">
-      <aside className="w-64 flex-shrink-0 border-r bg-muted/40 hidden md:block">
-        <div className="h-16 flex items-center px-6 border-b bg-background">
-          <Link className="flex items-center gap-2" href="/dashboard">
-            <Map className="h-6 w-6 text-primary" />
-            <span className="font-bold text-lg">Invisible City</span>
-          </Link>
-        </div>
-        <nav className="p-4 space-y-2">
-          <Link
-            href="/dashboard"
-            className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-              pathname === "/dashboard" 
-                ? "bg-primary text-primary-foreground" 
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            <LayoutDashboard className="h-4 w-4" />
-            Overview
-          </Link>
-          <Link
-            href="/dashboard/map"
-            className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-              pathname === "/dashboard/map" 
-                ? "bg-primary text-primary-foreground" 
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            <Map className="h-4 w-4" />
-            Interactive Map
-          </Link>
-          {/* Add more links later */}
-        </nav>
-      </aside>
-      
-      <div className="flex-1 flex flex-col">
-        <header className="h-16 flex items-center justify-between px-6 border-b bg-background">
-          <div className="flex items-center gap-4">
-            <div className="md:hidden">
-              <span className="font-bold">Invisible City</span>
-            </div>
-            <div className="border-l pl-4 ml-2">
-              <CitySelector />
-            </div>
+      <div className="flex min-h-screen bg-background text-foreground">
+        {/* Sidebar Desktop */}
+        <aside className="w-64 flex-shrink-0 border-r border-border bg-card hidden md:flex flex-col">
+          <div className="h-16 flex items-center px-6 border-b border-border bg-background">
+            <Link className="flex items-center gap-2.5" href="/dashboard">
+              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
+                <Map className="h-4 w-4" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-base tracking-tight leading-none">Invisible City</span>
+                <span className="text-[9px] text-muted-foreground font-mono tracking-wider">DEMO CIVIC TECH</span>
+              </div>
+            </Link>
           </div>
-          <div className="ml-auto flex items-center gap-4">
-            <button className="text-muted-foreground hover:text-foreground p-2 rounded-full transition-colors">
-              <Settings className="h-5 w-5" />
-            </button>
-            <button 
-              onClick={handleLogout}
-              className="text-muted-foreground hover:text-foreground p-2 rounded-full transition-colors"
-              title="Logout"
+
+          <nav className="p-4 space-y-1.5 flex-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-semibold transition-all ${
+                    isActive 
+                      ? "bg-primary text-primary-foreground shadow-sm" 
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="p-4 border-t border-border bg-muted/20 space-y-2">
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground p-2 rounded-md hover:bg-muted transition-colors"
             >
-              <LogOut className="h-5 w-5" />
+              <Home className="h-4 w-4" />
+              Halaman Utama
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 w-full text-xs font-medium text-red-500 hover:text-red-600 p-2 rounded-md hover:bg-red-500/10 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              Keluar Akun
             </button>
           </div>
-        </header>
-        <main className="flex-1 p-6 bg-muted/20">
-          {children}
-        </main>
-      </div>
+        </aside>
+
+        {/* Ruang Kerja Konten Utama */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Header */}
+          <header className="h-16 flex items-center justify-between px-4 md:px-6 border-b border-border bg-background sticky top-0 z-40">
+            <div className="flex items-center gap-3">
+              {/* Tombol Menu Mobile */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+                aria-label="Buka Menu Navigasi"
+              >
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden sm:inline">Kota Aktif:</span>
+                <CitySelector />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Link
+                href="/"
+                className="text-xs font-medium text-muted-foreground hover:text-foreground border border-border px-2.5 py-1 rounded-lg hover:bg-muted transition-colors"
+              >
+                Keluar
+              </Link>
+            </div>
+          </header>
+
+          {/* Menu Drawer Mobile */}
+          {mobileMenuOpen && (
+            <div className="md:hidden border-b border-border bg-card p-4 space-y-2 animate-in slide-in-from-top-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${
+                      isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+              <div className="pt-2 border-t border-border flex items-center justify-between">
+                <Link href="/" className="text-xs text-muted-foreground">Halaman Utama</Link>
+                <button onClick={handleLogout} className="text-xs text-red-500 font-semibold">Keluar Akun</button>
+              </div>
+            </div>
+          )}
+
+          {/* Body Halaman */}
+          <main className="flex-1 p-4 md:p-6 bg-muted/20 overflow-x-hidden">
+            {children}
+          </main>
+        </div>
       </div>
     </GeographicProvider>
   );

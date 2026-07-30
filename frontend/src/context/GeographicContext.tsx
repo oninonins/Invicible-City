@@ -14,24 +14,23 @@ interface GeographicContextType {
 
 const GeographicContext = createContext<GeographicContextType | undefined>(undefined);
 
+// Default city — dipakai langsung di initial state agar tidak ada flash kosong
+const DEFAULT_CITY = { id: 264, name: "Kota Adm. Jakarta Selatan" };
+
 export function GeographicProvider({ children }: { children: React.ReactNode }) {
-  const [selectedCity, setSelectedCityState] = useState<City | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
+  const [selectedCity, setSelectedCityState] = useState<City | null>(DEFAULT_CITY);
 
   useEffect(() => {
-    setIsMounted(true);
-    const storedCity = localStorage.getItem("sdgs_selected_city");
-    if (storedCity) {
-      try {
+    // Sinkronisasi dengan localStorage setelah mount — tidak memblokir render
+    try {
+      const storedCity = localStorage.getItem("sdgs_selected_city");
+      if (storedCity) {
         setSelectedCityState(JSON.parse(storedCity));
-      } catch (e) {
-        console.error("Failed to parse stored city", e);
+      } else {
+        localStorage.setItem("sdgs_selected_city", JSON.stringify(DEFAULT_CITY));
       }
-    } else {
-      // Default city if none selected
-      const defaultCity = { id: 3573, name: "Malang" };
-      setSelectedCityState(defaultCity);
-      localStorage.setItem("sdgs_selected_city", JSON.stringify(defaultCity));
+    } catch (e) {
+      console.error("Failed to read stored city", e);
     }
   }, []);
 
@@ -40,14 +39,9 @@ export function GeographicProvider({ children }: { children: React.ReactNode }) 
     localStorage.setItem("sdgs_selected_city", JSON.stringify(city));
   };
 
-  // Provide a safe default context even before mount to prevent hydration hook errors
-  const value = { selectedCity, setSelectedCity };
-
   return (
-    <GeographicContext.Provider value={value}>
-      <div style={{ visibility: isMounted ? 'visible' : 'hidden' }}>
-        {children}
-      </div>
+    <GeographicContext.Provider value={{ selectedCity, setSelectedCity }}>
+      {children}
     </GeographicContext.Provider>
   );
 }

@@ -1,92 +1,200 @@
 import Link from "next/link";
-import { ArrowRight, Map, Activity, Layers } from "lucide-react";
+import { 
+  ArrowRight, 
+  Map, 
+  Activity, 
+  Layers, 
+  School, 
+  Hospital, 
+  Stethoscope, 
+  Bus, 
+  Trees
+} from "lucide-react";
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="px-6 lg:px-14 h-16 flex items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <Link className="flex items-center justify-center gap-2" href="/">
-          <Map className="h-6 w-6 text-primary" />
-          <span className="font-bold text-xl tracking-tight">Invisible City</span>
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
+      {/* Navigasi Header */}
+      <header className="px-6 lg:px-12 h-16 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur sticky top-0 z-50">
+        <Link className="flex items-center gap-2.5" href="/">
+          <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shadow-sm">
+            <Map className="h-5 w-5" />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-bold text-lg tracking-tight leading-none">Invisible City</span>
+            <span className="text-[10px] text-muted-foreground font-mono tracking-wider">INTELIJEN AKSESIBILITAS PERKOTAAN</span>
+          </div>
         </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
-          <Link className="text-sm font-medium hover:text-primary transition-colors" href="#features">
-            Features
-          </Link>
-          <Link className="text-sm font-medium hover:text-primary transition-colors" href="#about">
-            About
-          </Link>
+        <nav className="flex gap-4 items-center">
           <Link
-            className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
-            href="/login"
+            className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow transition-colors hover:bg-primary/90"
+            href="/dashboard"
           >
-            Sign In
+            Buka Dashboard
+            <ArrowRight className="ml-1.5 h-4 w-4" />
           </Link>
         </nav>
       </header>
+
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 flex items-center justify-center bg-gradient-to-b from-background to-muted/50">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center space-y-4 text-center">
-              <div className="space-y-2 max-w-3xl">
-                <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none">
-                  AI-Powered Urban <span className="text-primary">Accessibility</span> Intelligence
+        {/* Hero Section: Menjelaskan Invisible City dalam 5-10 Detik */}
+        <section className="w-full py-16 md:py-24 lg:py-32 flex items-center justify-center bg-gradient-to-b from-background via-muted/30 to-background border-b border-border">
+          <div className="container px-4 md:px-6 max-w-5xl">
+            <div className="flex flex-col items-center space-y-6 text-center">
+              
+              {/* Pesan Utama Hero */}
+              <div className="space-y-4 max-w-3xl">
+                <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl md:text-6xl text-foreground">
+                  Petakan Yang Tak Terlihat. <br className="hidden sm:inline" />
+                  <span className="text-primary">Solusi Kesenjangan Aksesibilitas Perkotaan.</span>
                 </h1>
-                <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed pt-4">
-                  Measure public service equity, identify underserved areas, and prioritize infrastructure development using spatial analysis and AI recommendations.
+                <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed pt-2 leading-relaxed">
+                  Invisible City mengukur keadilan layanan publik dalam konsep kota 15 menit. Kami menghitung skor <strong>Urban Fairness Score (UFS)</strong> di seluruh sekolah, rumah sakit, klinik, halte bus, dan taman untuk mendeteksi wilayah yang terisolasi.
                 </p>
               </div>
-              <div className="space-x-4 pt-4">
+
+              {/* Tombol Aksi Utama */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 w-full sm:w-auto">
+                <Link
+                  href="/dashboard"
+                  className="inline-flex h-12 items-center justify-center rounded-xl bg-primary px-8 text-base font-semibold text-primary-foreground shadow-md transition-all hover:bg-primary/90 hover:scale-[1.02]"
+                >
+                  Jelajahi Dashboard Interaktif
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
                 <Link
                   href="/login"
-                  className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
+                  className="inline-flex h-12 items-center justify-center rounded-xl border border-border bg-card px-6 text-base font-semibold text-foreground shadow-sm transition-colors hover:bg-muted"
                 >
-                  Get Started
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  Masuk Akun
                 </Link>
+              </div>
+
+              {/* Ringkasan Metrik */}
+              <div className="pt-8 grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-3xl">
+                <div className="p-3 rounded-lg bg-card border border-border text-center">
+                  <div className="text-2xl font-bold text-foreground">5</div>
+                  <div className="text-xs text-muted-foreground font-medium">Kategori Fasilitas Utama</div>
+                </div>
+                <div className="p-3 rounded-lg bg-card border border-border text-center">
+                  <div className="text-2xl font-bold text-primary">UFS</div>
+                  <div className="text-xs text-muted-foreground font-medium">Indeks Keadilan Perkotaan</div>
+                </div>
+                <div className="p-3 rounded-lg bg-card border border-border text-center">
+                  <div className="text-2xl font-bold text-foreground">15 Menit</div>
+                  <div className="text-xs text-muted-foreground font-medium">Radius Akses Kota</div>
+                </div>
+                <div className="p-3 rounded-lg bg-card border border-border text-center">
+                  <div className="text-2xl font-bold text-emerald-600">PostGIS</div>
+                  <div className="text-xs text-muted-foreground font-medium">Engine Spasial ETL</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        {/* Penjelasan 5 Fasilitas Perkotaan */}
+        <section className="w-full py-16 flex items-center justify-center border-b border-border bg-card">
+          <div className="container px-4 md:px-6 max-w-5xl">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">5 Pilar Keadilan Perkotaan</h2>
+              <p className="text-sm text-muted-foreground mt-2">
+                Invisible City mengevaluasi keadilan akses publik di lima kategori fasilitas dasar perkotaan.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="p-4 rounded-xl border border-border bg-background flex flex-col items-center text-center space-y-2 shadow-sm">
+                <div className="p-2.5 rounded-lg bg-blue-500/10 text-blue-600">
+                  <School className="h-6 w-6" />
+                </div>
+                <h3 className="font-semibold text-sm text-foreground">Sekolah</h3>
+                <p className="text-xs text-muted-foreground">Akses pendidikan dasar & menengah</p>
+              </div>
+
+              <div className="p-4 rounded-xl border border-border bg-background flex flex-col items-center text-center space-y-2 shadow-sm">
+                <div className="p-2.5 rounded-lg bg-red-500/10 text-red-600">
+                  <Hospital className="h-6 w-6" />
+                </div>
+                <h3 className="font-semibold text-sm text-foreground">Rumah Sakit</h3>
+                <p className="text-xs text-muted-foreground">Layanan kesehatan darurat & spesialis</p>
+              </div>
+
+              <div className="p-4 rounded-xl border border-border bg-background flex flex-col items-center text-center space-y-2 shadow-sm">
+                <div className="p-2.5 rounded-lg bg-rose-500/10 text-rose-600">
+                  <Stethoscope className="h-6 w-6" />
+                </div>
+                <h3 className="font-semibold text-sm text-foreground">Klinik</h3>
+                <p className="text-xs text-muted-foreground">Puskesmas & pos kesehatan lokal</p>
+              </div>
+
+              <div className="p-4 rounded-xl border border-border bg-background flex flex-col items-center text-center space-y-2 shadow-sm">
+                <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-600">
+                  <Bus className="h-6 w-6" />
+                </div>
+                <h3 className="font-semibold text-sm text-foreground">Halte Bus</h3>
+                <p className="text-xs text-muted-foreground">Koridor & titik transportasi publik</p>
+              </div>
+
+              <div className="p-4 rounded-xl border border-border bg-background flex flex-col items-center text-center space-y-2 shadow-sm col-span-2 md:col-span-1">
+                <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-600">
+                  <Trees className="h-6 w-6" />
+                </div>
+                <h3 className="font-semibold text-sm text-foreground">Taman</h3>
+                <p className="text-xs text-muted-foreground">Ruang terbuka hijau & rekreasi</p>
               </div>
             </div>
           </div>
         </section>
-        
-        <section id="features" className="w-full py-12 md:py-24 lg:py-32 flex items-center justify-center">
-          <div className="container px-4 md:px-6">
-            <div className="mx-auto grid max-w-5xl items-center gap-6 py-12 lg:grid-cols-3 lg:gap-12">
-              <div className="flex flex-col items-center justify-center space-y-4 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                  <Map className="h-8 w-8 text-primary" />
+
+        {/* Fitur Utama */}
+        <section className="w-full py-16 flex items-center justify-center">
+          <div className="container px-4 md:px-6 max-w-5xl">
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="p-6 rounded-xl border border-border bg-card space-y-3 shadow-sm">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <Map className="h-5 w-5" />
                 </div>
-                <div className="space-y-2">
-                  <h3 className="font-bold text-xl">Interactive City Map</h3>
-                  <p className="text-muted-foreground">Visualize public facilities and demographic data on a single unified spatial view.</p>
-                </div>
+                <h3 className="font-bold text-lg text-foreground">Peta Spasial Terpadu</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Peta interaktif Leaflet yang menampilkan batas administratif kota, kecamatan, dan sebaran fasilitas perkotaan.
+                </p>
               </div>
-              <div className="flex flex-col items-center justify-center space-y-4 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                  <Activity className="h-8 w-8 text-primary" />
+
+              <div className="p-6 rounded-xl border border-border bg-card space-y-3 shadow-sm">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <Activity className="h-5 w-5" />
                 </div>
-                <div className="space-y-2">
-                  <h3 className="font-bold text-xl">Urban Fairness Score</h3>
-                  <p className="text-muted-foreground">Calculate equity scores for public service accessibility in every district and subdistrict.</p>
-                </div>
+                <h3 className="font-bold text-lg text-foreground">Skor Keadilan Perkotaan (UFS)</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Algoritma penilaian keadilan spasial real-time yang membandingkan sebaran fasilitas nyata dengan target ideal kota 15 menit.
+                </p>
               </div>
-              <div className="flex flex-col items-center justify-center space-y-4 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                  <Layers className="h-8 w-8 text-primary" />
+
+              <div className="p-6 rounded-xl border border-border bg-card space-y-3 shadow-sm">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <Layers className="h-5 w-5" />
                 </div>
-                <div className="space-y-2">
-                  <h3 className="font-bold text-xl">AI Recommendations</h3>
-                  <p className="text-muted-foreground">Generate data-driven infrastructure recommendations and simulate impacts before building.</p>
-                </div>
+                <h3 className="font-bold text-lg text-foreground">Analisis Kesenjangan Akses</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Ringkasan wawasan kebijakan instan untuk mendeteksi kecamatan krisis fasilitas guna membantu perencanaan kota.
+                </p>
               </div>
             </div>
           </div>
         </section>
       </main>
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
-        <p className="text-xs text-muted-foreground">
-          © 2026 Invisible City. All rights reserved. Push The Impact.
-        </p>
+
+      {/* Footer */}
+      <footer className="py-6 w-full border-t border-border bg-card">
+        <div className="container px-4 md:px-6 mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-muted-foreground gap-2">
+          <p>© 2026 Invisible City — Intelijen Aksesibilitas Perkotaan Berbasis AI & Spasial.</p>
+          <div className="flex gap-4">
+            <Link href="/dashboard" className="hover:text-foreground transition-colors">Dashboard</Link>
+            <Link href="/login" className="hover:text-foreground transition-colors">Masuk Akun</Link>
+          </div>
+        </div>
       </footer>
     </div>
   );

@@ -26,14 +26,23 @@ export default function CitySelector() {
           }
         });
         if (response.ok) {
-          const data = await response.json();
-          setCities(data);
+          const data: City[] = await response.json();
+          // Put Jakarta & Malang cities towards the top for easy demo access
+          const sorted = [...data].sort((a, b) => {
+            const isFeaturedA = a.name.toLowerCase().includes("jakarta") || a.name.toLowerCase().includes("malang");
+            const isFeaturedB = b.name.toLowerCase().includes("jakarta") || b.name.toLowerCase().includes("malang");
+            if (isFeaturedA && !isFeaturedB) return -1;
+            if (!isFeaturedA && isFeaturedB) return 1;
+            return a.name.localeCompare(b.name);
+          });
+          setCities(sorted);
           
-          // Fallback if stored city no longer exists in DB
-          if (data.length > 0) {
-            const cityExists = data.some((c: City) => c.id === selectedCity?.id);
+          if (sorted.length > 0) {
+            const cityExists = sorted.some((c: City) => c.id === selectedCity?.id);
             if (!cityExists) {
-              setSelectedCity(data[0]);
+              // Prefer Jakarta Selatan or first available
+              const defaultFeatured = sorted.find(c => c.name.includes("Jakarta Selatan")) || sorted[0];
+              setSelectedCity(defaultFeatured);
             }
           }
         }
@@ -45,6 +54,7 @@ export default function CitySelector() {
     };
     
     fetchCities();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
