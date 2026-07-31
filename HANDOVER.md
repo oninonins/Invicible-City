@@ -38,6 +38,76 @@
 
 ## Session Log
 
+### 31 Jul 2026 (Sesi 10) — UFS v0 Implemented
+- **Models** `backend/app/models/ufs.py`: `UfsIndicator` (`ufs_indicators` — indicator, weight 0.2, benchmark_density nullable, reference_km, benchmark_note, updated_at) + `UfsScore` (`ufs_scores` — scope_type `district`|`city`, scope_id, overall_score, category, indicators JSONB, total_facilities, breakdown JSONB, district_count, methodology=`v0-provision`, computed_at, UNIQUE(scope_type, scope_id)).
+- **Migration `0002_ufs`** (down_revision `0001_baseline`); models registered in `alembic/env.py`. Applied to both `sdgs_test` (fresh) and production `sdgs`.
+- **Service** `backend/app/services/ufs.py`: `refresh_benchmarks` (median density per indicator over nonzero districts, accessibility ref 1km Euclidean), `compute_district_ufs`/`compute_city_ufs` (city = mean of districts), rebalanced mean when indicator benchmark missing, `get_*` read `ufs_scores` cache first, `_category`, `_legacy_status`.
+- **API** `backend/app/api/v1/analytics.py` `/ufs` rewritten: `city_id` XOR `district_id` (422), 404 invalid, lazy `refresh_benchmarks` when `ufs_indicators` empty, no-data → 0/"No Data". Response backward-compatible (kept `overall_score`, `total_facilities`, `breakdown`, `status`) + new `category`, `indicators`, `methodology`, `district_count`, `per_district`, `computed_at`, `scope_type`/`scope_id`.
+- **CLI** `backend/scripts/refresh_ufs.py`: `--benchmarks`, `--city N`, `--all-districts`.
+- **Tests** `backend/tests/test_ufs.py` (14 tests) + `conftest.py` imports ufs models + TRUNCATE includes `ufs_scores, ufs_indicators`. Pytest **49/49 PASS**. Ruff clean. Frontend `npm run build` compiles.
+- **Prod verification**: city 90 (Aceh Barat) → overall 7.9, 27 facilities, 12 districts; benchmarks computed (5 rows), cache hit confirmed (computed_at stable across calls). Frozen DB intact: facility 77,869 / city 515 / district 7,269 / province 38.
+- **Known limitation**: `dataset_metadata` row count observed 48 (was 36 at Sesi 7) — pre-existing, not caused by this milestone.
+
+### 31 Jul 2026 (Sesi 9) — Migration Foundation (Alembic) — UFS Unblocked
+- **Alembic added properly**: `backend/alembic.ini`, `backend/alembic/env.py` (target_metadata = all models, URL from `app.core.config.settings`), `script.py.mako`, `alembic/versions/`. Added `alembic>=1.12.0` to requirements, backend image rebuilt.
+- **Baseline `0001_baseline`** hand-written to reproduce production `sdgs` schema EXACTLY. Verified empirically: applied to fresh scratch DB → columns/indexes/constraints diff vs production = IDENTICAL (only `alembic_version` bookkeeping added).
+- **4 model/DB divergences captured in baseline** (models differ from production): GiST geom indexes present in DB but not models; `facility.raw_tags` is JSONB (model says JSON); no FK on `facility.city_id/district_id` (models declare them); `facility.source` has server default `'OSM'`. Autogenerate will re-surface these — documented in `docs/MIGRATIONS.md`.
+- **Production adopted via `alembic stamp head`** — NO DDL ran on existing tables; only `alembic_version` table created. Before/after verified: counts unchanged (38/515/7269/0/77869/1/0/48), schema fingerprints identical.
+- **`Base.metadata.create_all` removed from `app/main.py`** (was the old migration mechanism). docker-compose backend command now `sh -c "alembic upgrade head && uvicorn ..."` (idempotent).
+- **Tests**: `sdgs_test` rebuilt via `alembic upgrade head` → pytest **36/36 PASS** on migration-created schema. Ruff clean on changed files.
+- **Key geoalchemy2 gotcha**: `Geometry` defaults `spatial_index=True` → auto-creates `idx_<table>_<geom>` during `create_table`. Baseline uses `spatial_index=False` + explicit `create_index ... postgresql_using="gist"` to avoid duplicate-index errors.
+- **Procedure documented**: `docs/MIGRATIONS.md` (run/create/verify/safety rules).
+- **UFS v0 no longer blocked**: preserved plan in previous session section can resume; step 1 (migration strategy) is DONE.
+
+### 31 Jul 2026 (Sesi 8) — UFS v0 Implementation BLOCKED (Migration Gap) — No Code
+- **UFS v0 methodology approved** (docs/UFS_METHODOLOGY.md): provision-based, 5 indicators (Education/Healthcare/Transportation/PublicSpace/Accessibility), equal 20% weights, national median density benchmark.
+- **Implementation plan approved** with user decisions:
+  - Benchmark = median density over districts with >=1 facility of that type (nonzero only, avoids div-by-zero)
+  - Accessibility = kNN nearest facility across ALL districts (unrestricted), filtered per facility_type, meter-based geography, 1km Euclidean proxy, no OSRM
+  - Persistence via `ufs_indicators` + `ufs_scores` tables
+  - Backend-only scope (no frontend)
+- **BLOCKER — migration architecture gap**: No Alembic configured (no alembic.ini, no env.py/versions/, not in requirements.txt, no compose service). `main.py:12` comment says "later switch to Alembic" but it was never set up. Production schema changes historically done via manual psql (facility tables, see line 108). Constraint: UFS tables must NOT be created via `Base.metadata.create_all()` as production mechanism, and NO ad-hoc SQL DDL in this milestone.
+- **Decision: STOP.** No code, DB, dependency, or table changes made. Alembic introduction deferred to its own milestone.
+- **Plan preserved for resumption** (see next section).
+
+### Preserved UFS v0 Implementation Plan (resume after migration strategy established)
+
+1. **Establish migration strategy** (Alembic baseline OR an explicitly approved DDL mechanism). This is the gate for everything below.
+2. **NEW `backend/app/models/ufs.py`**:
+   - `UfsIndicator` (`ufs_indicators`): indicator, weight (default 0.2), benchmark_density (nullable), reference_km (1.0, accessibility), benchmark_note, updated_at — 5 rows
+   - `UfsScore` (`ufs_scores`): scope_type (`district`|`city`), scope_id, overall_score, category, indicators JSONB, total_facilities, breakdown JSONB, district_count, methodology=`v0-provision`, computed_at, UNIQUE(scope_type, scope_id)
+3. **NEW `backend/app/services/ufs.py`** (calculations stay here, NOT in API route):
+   - `refresh_benchmarks(db)` — one query: facility counts per (district, type) + `ST_Area(ST_Transform(district.geom,32749))/1e6`; median per type over nonzero districts; upsert `ufs_indicators`
+   - `_density_score(db, district_id, types, benchmark)` — `min(actual/median*100, 100)`, 0 facilities → 0
+   - `_accessibility_scores(db, district_id)` — per 5 types: kNN `ST_Distance(geom::geography, ST_PointOnSurface(district.geom)::geography)` `ORDER BY geom::geography <-> target LIMIT 1`, `WHERE facility_type = :t`; `max(0, 100 - dist_km/ref_km*100)`, 1km reference
+   - `compute_district_ufs`, `compute_city_ufs` (city = mean of district scores), `get_city_ufs` (read `ufs_scores` cache first), `_category`
+   - Weights rebalance (skip missing indicator) as safety path
+   - Categories: 80-100 Excellent, 60-79 Good, 40-59 Fair, 20-39 Poor, 0-19 Critical
+4. **MOD `backend/app/api/v1/analytics.py`** — replace `/ufs` handler:
+   - Backward-compat fields: `overall_score`, `total_facilities`, `breakdown` (counts), `status` (legacy Good/Fair/Poor mapping)
+   - New fields: `category` (5-level), `indicators` {education, healthcare, transportation, public_space, accessibility}, `methodology: "v0-provision"`, `district_count`, `per_district`, `computed_at`
+   - 404 for invalid city/district; lazy `refresh_benchmarks` when `ufs_indicators` empty; no-data city → overall 0, status "No Data"
+5. **NEW `backend/scripts/refresh_ufs.py`** CLI: `--benchmarks`, `--city ID`, `--all-districts`
+6. **NEW `backend/tests/test_ufs.py`** + adjust `conftest.py` so UFS tables exist in `sdgs_test`
+7. **Docs**: `docs/UFS_METHODOLOGY.md` status → implemented (MVP); HANDOVER session log
+
+### 31 Jul 2026 (Sesi 7) — Backend Stabilization + UFS Methodology Design (No Code)
+- **Backend stabilization CLOSED** (Batch 1–3 + reproducibility):
+  - `/cities` perf: select `(id,name)` only + ORDER BY id → **0.02s** (dari 8–16s)
+  - Pagination: `skip ge=0`, `limit ge=1 le=500` → 422 utk invalid; ORDER BY facility.id (deterministik)
+  - POST facility: validasi name/lat/lng + FK exist check → 422/404
+  - Districts endpoint: 404 utk city invalid, 200 [] utk city kosong
+  - Test suite baru: `backend/tests/` (36 test, PASS) di DB `sdgs_test` terisolasi — production `sdgs` untouched
+  - Ruff: `tests/` clean; 22 pre-existing violation di `app/` dibiarkan (ETL frozen)
+  - **Reproducibility PASS**: rebuild image dari Dockerfile+requirements → pytest 36/36, ruff clean, health OK
+  - Report: `AUDIT.md` (root) berisi full backend audit
+- **UFS methodology design DONE (design only, TIDAK diimplementasi)** → `docs/UFS_METHODOLOGY.md`
+  - Keputusan: **UFS v0 provision-based** utk MVP (density + centroid accessibility), benchmark = **median empiris nasional**
+  - UFS v1 (per-capita) BLOCKED: butuh BPS populasi, park polygon, OSRM
+  - Data grounding: 77,869 facility, 7,269 district ber-geom, 38% district 0 facility, park 100% POINT, tanpa populasi/OSRM
+  - 2 PROVISIONAL ASSUMPTIONS ditandai: (A) 1km ref + Euclidean = proxy accessibility; (B) median density bias urban/rural + ukuran district — keduanya dievaluasi ulang utk v1
+  - Next: implementasi UFS v0 (menunggu approval, diluar scope stabilisasi)
+
 ### 26 Jul 2026 — Provider Abstraction + Batch Persistence + Dmxsan Import
 - Built `DatasetProvider` ABC, `LocalFileProvider`, `BIGFeatureServiceProvider`, `DmxsanProvider`
 - Refactored `big.py`: provider-aware functions, removed legacy BIG API code

@@ -36,7 +36,7 @@ export default function CitySelector() {
             return a.name.localeCompare(b.name);
           });
           setCities(sorted);
-          
+
           if (sorted.length > 0) {
             const cityExists = sorted.some((c: City) => c.id === selectedCity?.id);
             if (!cityExists) {
@@ -52,7 +52,7 @@ export default function CitySelector() {
         setLoading(false);
       }
     };
-    
+
     fetchCities();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

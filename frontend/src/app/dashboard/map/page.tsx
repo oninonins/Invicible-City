@@ -12,6 +12,7 @@ import {
   Bus as BusIcon, 
   Trees as ParkIcon,
   MapPin,
+  AlertTriangle,
   X
 } from "lucide-react";
 import { useGeographic } from "@/context/GeographicContext";
@@ -44,12 +45,12 @@ export default function MapPage() {
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
 
   // Ambil fasilitas
-  const { data: facilities = [], isLoading: loadingFacilities } = useQuery<Facility[]>({
+  const { data: facilities = [], isLoading: loadingFacilities, isError: facilitiesError } = useQuery<Facility[]>({
     queryKey: ['facilities', selectedCity?.id],
     queryFn: async () => {
       if (!selectedCity?.id) return [];
       const token = Cookies.get("access_token");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/facilities?city_id=${selectedCity.id}&limit=1000`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/facilities?city_id=${selectedCity.id}&limit=500`, {
         headers: token ? { "Authorization": `Bearer ${token}` } : {}
       });
       if (!res.ok) throw new Error("Gagal mengambil data fasilitas");
@@ -89,7 +90,7 @@ export default function MapPage() {
   });
 
   const isLoading = loadingFacilities || loadingBoundary || loadingDistricts;
-  const isEmpty = !isLoading && facilities.length === 0;
+  const isEmpty = !isLoading && !facilitiesError && facilities.length === 0;
 
   // Hitung jumlah per kategori
   const schoolCount = facilities.filter(f => f.facility_type === 'School').length;
@@ -147,7 +148,15 @@ export default function MapPage() {
       
       {/* Kanvas Utama Peta */}
       <div className="flex-1 w-full rounded-xl overflow-hidden relative">
-        {isEmpty ? (
+        {facilitiesError ? (
+          <div className="h-full w-full rounded-xl border border-border bg-card p-8 flex flex-col items-center justify-center text-center shadow-sm">
+            <AlertTriangle className="h-12 w-12 text-red-500 mb-3" />
+            <h3 className="text-lg font-bold text-foreground">Gagal Memuat Fasilitas</h3>
+            <p className="text-sm text-muted-foreground max-w-md mt-1">
+              Data fasilitas untuk <strong className="text-foreground">{selectedCity?.name}</strong> gagal dimuat. Coba muat ulang halaman atau pilih kota lain.
+            </p>
+          </div>
+        ) : isEmpty ? (
           <div className="h-full w-full rounded-xl border border-border bg-card p-8 flex flex-col items-center justify-center text-center shadow-sm">
             <MapPin className="h-12 w-12 text-muted-foreground mb-3" />
             <h3 className="text-lg font-bold text-foreground">Tidak Ada Data Spasial</h3>
