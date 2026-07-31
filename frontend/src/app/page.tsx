@@ -17,13 +17,7 @@ export default function LandingPage() {
       {/* Navigasi Header */}
       <header className="px-6 lg:px-12 h-16 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur sticky top-0 z-50">
         <Link className="flex items-center gap-2.5" href="/">
-          <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shadow-sm">
-            <Map className="h-5 w-5" />
-          </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-lg tracking-tight leading-none">Invisible City</span>
-            <span className="text-[10px] text-muted-foreground font-mono tracking-wider">INTELIJEN AKSESIBILITAS PERKOTAAN</span>
-          </div>
+          <span className="font-bold text-lg tracking-tight">Invisible City</span>
         </Link>
         <nav className="flex gap-4 items-center">
           <Link
@@ -68,26 +62,6 @@ export default function LandingPage() {
                 >
                   Masuk Akun
                 </Link>
-              </div>
-
-              {/* Ringkasan Metrik */}
-              <div className="pt-8 grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-3xl">
-                <div className="p-3 rounded-lg bg-card border border-border text-center">
-                  <div className="text-2xl font-bold text-foreground">5</div>
-                  <div className="text-xs text-muted-foreground font-medium">Kategori Fasilitas Utama</div>
-                </div>
-                <div className="p-3 rounded-lg bg-card border border-border text-center">
-                  <div className="text-2xl font-bold text-primary">UFS</div>
-                  <div className="text-xs text-muted-foreground font-medium">Indeks Keadilan Perkotaan</div>
-                </div>
-                <div className="p-3 rounded-lg bg-card border border-border text-center">
-                  <div className="text-2xl font-bold text-foreground">15 Menit</div>
-                  <div className="text-xs text-muted-foreground font-medium">Radius Akses Kota</div>
-                </div>
-                <div className="p-3 rounded-lg bg-card border border-border text-center">
-                  <div className="text-2xl font-bold text-emerald-600">PostGIS</div>
-                  <div className="text-xs text-muted-foreground font-medium">Engine Spasial ETL</div>
-                </div>
               </div>
 
             </div>
@@ -166,7 +140,7 @@ export default function LandingPage() {
                 <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                   <Activity className="h-5 w-5" />
                 </div>
-                <h3 className="font-bold text-lg text-foreground">Skor Keadilan Perkotaan (UFS)</h3>
+                <h3 className="font-bold text-lg text-foreground">Urban fairness score</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Algoritma penilaian keadilan spasial real-time yang membandingkan sebaran fasilitas nyata dengan target ideal kota 15 menit.
                 </p>
@@ -189,7 +163,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="py-6 w-full border-t border-border bg-card">
         <div className="container px-4 md:px-6 mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-muted-foreground gap-2">
-          <p>© 2026 Invisible City — Intelijen Aksesibilitas Perkotaan Berbasis AI & Spasial.</p>
+          <p>© 2026 Invisible City.</p>
           <div className="flex gap-4">
             <Link href="/dashboard" className="hover:text-foreground transition-colors">Dashboard</Link>
             <Link href="/login" className="hover:text-foreground transition-colors">Masuk Akun</Link>

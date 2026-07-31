@@ -4,14 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Cookies from "js-cookie";
-import { 
-  Map, 
-  LogOut, 
-  LayoutDashboard, 
-  BarChart3, 
-  Menu, 
+import {
+  Map,
+  LogOut,
+  LayoutDashboard,
+  BarChart3,
+  Menu,
   X,
-  MapPin,
   Home
 } from "lucide-react";
 import { GeographicProvider } from "@/context/GeographicContext";
@@ -51,13 +50,7 @@ export default function DashboardLayout({
         <aside className="w-64 flex-shrink-0 border-r border-border bg-card hidden md:flex flex-col">
           <div className="h-16 flex items-center px-6 border-b border-border bg-background">
             <Link className="flex items-center gap-2.5" href="/dashboard">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
-                <Map className="h-4 w-4" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-base tracking-tight leading-none">Invisible City</span>
-                <span className="text-[9px] text-muted-foreground font-mono tracking-wider">DEMO CIVIC TECH</span>
-              </div>
+              <span className="font-bold text-base tracking-tight">Invisible City</span>
             </Link>
           </div>
 
@@ -69,11 +62,10 @@ export default function DashboardLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-semibold transition-all ${
-                    isActive 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
+                  className={`flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-semibold transition-all ${isActive
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
@@ -115,8 +107,7 @@ export default function DashboardLayout({
               </button>
 
               <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden sm:inline">Kota Aktif:</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden sm:inline">Kota:</span>
                 <CitySelector />
               </div>
             </div>
@@ -142,9 +133,8 @@ export default function DashboardLayout({
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${
-                      isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
-                    }`}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                      }`}
                   >
                     <Icon className="h-4 w-4" />
                     {item.label}

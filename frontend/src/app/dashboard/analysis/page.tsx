@@ -4,18 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import { 
   BarChart3, 
-  CheckCircle2, 
-  AlertTriangle, 
-  School, 
-  Hospital, 
-  Stethoscope, 
-  Bus, 
-  Trees, 
-  HelpCircle,
-  MapPin,
   Sparkles
 } from "lucide-react";
 import { useGeographic } from "@/context/GeographicContext";
+import { API_BASE } from "@/lib/api";
 
 interface AnalyticsData {
   overall_score: number;
@@ -33,7 +25,7 @@ export default function AnalysisPage() {
     queryFn: async () => {
       if (!selectedCity?.id) return null;
       const token = Cookies.get("access_token");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/analytics/ufs?city_id=${selectedCity.id}`, {
+      const res = await fetch(`${API_BASE}/analytics/ufs?city_id=${selectedCity.id}`, {
         headers: token ? { "Authorization": `Bearer ${token}` } : {}
       });
       if (!res.ok) throw new Error("Gagal mengambil data analitik");
@@ -51,7 +43,7 @@ export default function AnalysisPage() {
   const schoolCount = breakdown['School'] || 0;
   const hospitalCount = breakdown['Hospital'] || 0;
   const clinicCount = breakdown['Clinic'] || 0;
-  const busStopCount = breakdown['BusStop'] || breakdown['Bus Stop'] || 0;
+  const busStopCount = breakdown['BusStop'] || 0;
   const parkCount = breakdown['Park'] || 0;
 
   return (
@@ -61,7 +53,7 @@ export default function AnalysisPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <BarChart3 className="h-6 w-6 text-primary" />
-            Skor Keadilan Perkotaan (UFS) & Analisis Aksesibilitas
+            Urban fairness score & Analisis Aksesibilitas
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Evaluasi kuantitatif keadilan dan aksesibilitas fasilitas publik untuk <strong className="text-foreground">{selectedCity?.name}</strong>.
@@ -131,9 +123,8 @@ export default function AnalysisPage() {
           
           {/* Sekolah */}
           <div className="bg-card border border-border p-4 rounded-xl shadow-sm space-y-2">
-            <div className="flex items-center justify-between">
+            <div>
               <span className="text-xs font-bold text-blue-600 uppercase">Sekolah</span>
-              <School className="h-4 w-4 text-blue-600" />
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">{schoolCount}</div>
             <div className="text-[11px] text-muted-foreground">Pendidikan dasar & menengah</div>
@@ -141,9 +132,8 @@ export default function AnalysisPage() {
 
           {/* Rumah Sakit */}
           <div className="bg-card border border-border p-4 rounded-xl shadow-sm space-y-2">
-            <div className="flex items-center justify-between">
+            <div>
               <span className="text-xs font-bold text-red-600 uppercase">Rumah Sakit</span>
-              <Hospital className="h-4 w-4 text-red-600" />
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">{hospitalCount}</div>
             <div className="text-[11px] text-muted-foreground">Pusat kesehatan darurat</div>
@@ -151,9 +141,8 @@ export default function AnalysisPage() {
 
           {/* Klinik */}
           <div className="bg-card border border-border p-4 rounded-xl shadow-sm space-y-2">
-            <div className="flex items-center justify-between">
+            <div>
               <span className="text-xs font-bold text-rose-600 uppercase">Klinik</span>
-              <Stethoscope className="h-4 w-4 text-rose-600" />
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">{clinicCount}</div>
             <div className="text-[11px] text-muted-foreground">Puskesmas & kesehatan lokal</div>
@@ -161,9 +150,8 @@ export default function AnalysisPage() {
 
           {/* Halte Bus */}
           <div className="bg-card border border-border p-4 rounded-xl shadow-sm space-y-2">
-            <div className="flex items-center justify-between">
+            <div>
               <span className="text-xs font-bold text-amber-600 uppercase">Halte Bus</span>
-              <Bus className="h-4 w-4 text-amber-600" />
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">{busStopCount}</div>
             <div className="text-[11px] text-muted-foreground">Titik akses transportasi</div>
@@ -171,66 +159,11 @@ export default function AnalysisPage() {
 
           {/* Taman */}
           <div className="bg-card border border-border p-4 rounded-xl shadow-sm space-y-2 col-span-2 sm:col-span-1">
-            <div className="flex items-center justify-between">
+            <div>
               <span className="text-xs font-bold text-emerald-600 uppercase">Taman</span>
-              <Trees className="h-4 w-4 text-emerald-600" />
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">{parkCount}</div>
             <div className="text-[11px] text-muted-foreground">Ruang hijau & rekreasi</div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* Panduan Pertanyaan Juri Kompetisi */}
-      <div className="space-y-3">
-        <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-          <HelpCircle className="h-4 w-4 text-primary" />
-          Panduan Pertanyaan Juri (Kejelasan 10 Detik)
-        </h3>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          
-          <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-2">
-            <div className="flex items-center gap-2 text-primary font-bold text-sm">
-              <CheckCircle2 className="h-4 w-4" />
-              1. Apa itu Invisible City?
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Platform intelijen spasial AI & PostGIS yang mengukur keadilan layanan publik 15 menit dan memetakan wilayah terisolasi.
-            </p>
-          </div>
-
-          <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-2">
-            <div className="flex items-center gap-2 text-primary font-bold text-sm">
-              <MapPin className="h-4 w-4" />
-              2. Kota mana yang sedang dianalisis?
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Saat ini menganalisis <strong className="text-foreground">{selectedCity?.name}</strong> berdasarkan batas administratif kecamatan dan sebaran klaster fasilitas OSM.
-            </p>
-          </div>
-
-          <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-2">
-            <div className="flex items-center gap-2 text-primary font-bold text-sm">
-              <BarChart3 className="h-4 w-4" />
-              3. Berapa Skor Keadilan Perkotaan (UFS)?
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Skor Keadilan Perkotaan adalah <strong className="text-foreground">{score} / 100 (Keadilan {statusStr})</strong>, dihitung secara dinamis dari rasio ketersediaan fasilitas publik.
-            </p>
-          </div>
-
-          <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-2">
-            <div className="flex items-center gap-2 text-amber-600 font-bold text-sm">
-              <AlertTriangle className="h-4 w-4" />
-              4. Di mana kesenjangan aksesibilitas & aksi apa yang diperlukan?
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {hospitalCount + clinicCount < 5 
-                ? "Defisit layanan kesehatan primer terdeteksi. Rekomendasi: tempatkan pos puskesmas pembantu di kecamatan terluar." 
-                : "Defisit fasilitas halte bus terdeteksi. Rekomendasi: tambah rute pengumpan transportasi publik."}
-            </p>
           </div>
 
         </div>

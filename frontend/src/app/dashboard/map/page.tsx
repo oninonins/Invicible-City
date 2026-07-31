@@ -18,6 +18,7 @@ import {
 import { useGeographic } from "@/context/GeographicContext";
 import Cookies from "js-cookie";
 import { Facility } from "@/components/map/Map";
+import { API_BASE } from "@/lib/api";
 
 // Dynamic import untuk Leaflet Map
 const Map = dynamic(() => import("@/components/map/Map"), { 
@@ -35,22 +36,23 @@ const CATEGORIES = [
   { id: "School", label: "Sekolah", icon: SchoolIcon, color: "bg-blue-600 text-white" },
   { id: "Hospital", label: "Rumah Sakit", icon: HospitalIcon, color: "bg-red-600 text-white" },
   { id: "Clinic", label: "Klinik", icon: Stethoscope, color: "bg-rose-600 text-white" },
-  { id: "Bus Stop", label: "Halte Bus", icon: BusIcon, color: "bg-amber-600 text-white" },
+  { id: "BusStop", label: "Halte Bus", icon: BusIcon, color: "bg-amber-600 text-white" },
   { id: "Park", label: "Taman", icon: ParkIcon, color: "bg-emerald-600 text-white" },
 ];
 
 export default function MapPage() {
-  const { selectedCity } = useGeographic();
+  const { selectedCity, selectedDistrict } = useGeographic();
   const [activeCategory, setActiveCategory] = useState<string>("ALL");
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
 
   // Ambil fasilitas
   const { data: facilities = [], isLoading: loadingFacilities, isError: facilitiesError } = useQuery<Facility[]>({
-    queryKey: ['facilities', selectedCity?.id],
+    queryKey: ['facilities', selectedCity?.id, selectedDistrict?.id],
     queryFn: async () => {
       if (!selectedCity?.id) return [];
       const token = Cookies.get("access_token");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/facilities?city_id=${selectedCity.id}&limit=500`, {
+      const districtParam = selectedDistrict?.id ? `&district_id=${selectedDistrict.id}` : '';
+      const res = await fetch(`${API_BASE}/facilities?city_id=${selectedCity.id}${districtParam}&limit=500`, {
         headers: token ? { "Authorization": `Bearer ${token}` } : {}
       });
       if (!res.ok) throw new Error("Gagal mengambil data fasilitas");
@@ -65,7 +67,7 @@ export default function MapPage() {
     queryFn: async () => {
       if (!selectedCity?.id) return null;
       const token = Cookies.get("access_token");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/cities/${selectedCity.id}/boundary`, {
+      const res = await fetch(`${API_BASE}/cities/${selectedCity.id}/boundary`, {
         headers: token ? { "Authorization": `Bearer ${token}` } : {}
       });
       if (!res.ok) return null;
@@ -80,7 +82,7 @@ export default function MapPage() {
     queryFn: async () => {
       if (!selectedCity?.id) return null;
       const token = Cookies.get("access_token");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/cities/${selectedCity.id}/districts`, {
+      const res = await fetch(`${API_BASE}/cities/${selectedCity.id}/districts`, {
         headers: token ? { "Authorization": `Bearer ${token}` } : {}
       });
       if (!res.ok) return null;
@@ -96,7 +98,7 @@ export default function MapPage() {
   const schoolCount = facilities.filter(f => f.facility_type === 'School').length;
   const hospitalCount = facilities.filter(f => f.facility_type === 'Hospital').length;
   const clinicCount = facilities.filter(f => f.facility_type === 'Clinic').length;
-  const busStopCount = facilities.filter(f => f.facility_type === 'BusStop' || f.facility_type === 'Bus Stop').length;
+  const busStopCount = facilities.filter(f => f.facility_type === 'BusStop').length;
   const parkCount = facilities.filter(f => f.facility_type === 'Park').length;
 
   return (
@@ -106,7 +108,9 @@ export default function MapPage() {
         <div>
           <h1 className="text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
             <span>Peta Spasial Interaktif</span>
-            <span className="text-xs font-mono font-medium text-muted-foreground">({selectedCity?.name})</span>
+            <span className="text-xs font-mono font-medium text-muted-foreground">
+              ({selectedCity?.name}{selectedDistrict ? ` • ${selectedDistrict.name}` : ''})
+            </span>
           </h1>
         </div>
 

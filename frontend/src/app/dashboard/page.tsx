@@ -4,19 +4,19 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import Cookies from "js-cookie";
-import { 
-  Building2, 
-  School as SchoolIcon, 
-  Hospital as HospitalIcon, 
-  Stethoscope, 
-  Bus as BusIcon, 
+import {
+  Building2,
+  School as SchoolIcon,
+  Hospital as HospitalIcon,
+  Stethoscope,
+  Bus as BusIcon,
   Trees as ParkIcon,
-  AlertTriangle,
   Layers,
   MapPin
 } from "lucide-react";
 import { useGeographic } from "@/context/GeographicContext";
 import { Facility } from "@/components/map/Map";
+import { API_BASE } from "@/lib/api";
 
 // Import Leaflet Map secara dinamis untuk menghindari SSR error
 const Map = dynamic(() => import("@/components/map/Map"), {
@@ -41,12 +41,12 @@ const CATEGORIES = [
   { id: "School", label: "Sekolah", icon: SchoolIcon, color: "bg-blue-600 text-white" },
   { id: "Hospital", label: "Rumah Sakit", icon: HospitalIcon, color: "bg-red-600 text-white" },
   { id: "Clinic", label: "Klinik", icon: Stethoscope, color: "bg-rose-600 text-white" },
-  { id: "Bus Stop", label: "Halte Bus", icon: BusIcon, color: "bg-amber-600 text-white" },
+  { id: "BusStop", label: "Halte Bus", icon: BusIcon, color: "bg-amber-600 text-white" },
   { id: "Park", label: "Taman", icon: ParkIcon, color: "bg-emerald-600 text-white" },
 ];
 
 export default function DashboardPage() {
-  const { selectedCity } = useGeographic();
+  const { selectedCity, selectedDistrict } = useGeographic();
   const [activeCategory, setActiveCategory] = useState<string>("ALL");
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
 
@@ -56,7 +56,7 @@ export default function DashboardPage() {
     queryFn: async () => {
       if (!selectedCity?.id) return null;
       const token = Cookies.get("access_token");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/analytics/ufs?city_id=${selectedCity.id}`, {
+      const res = await fetch(`${API_BASE}/analytics/ufs?city_id=${selectedCity.id}`, {
         headers: token ? { "Authorization": `Bearer ${token}` } : {}
       });
       if (!res.ok) throw new Error("Gagal mengambil data analitik");
@@ -67,11 +67,12 @@ export default function DashboardPage() {
 
   // Ambil data Fasilitas
   const { data: facilities = [], isLoading: loadingFacilities } = useQuery<Facility[]>({
-    queryKey: ['facilities', selectedCity?.id],
+    queryKey: ['facilities', selectedCity?.id, selectedDistrict?.id],
     queryFn: async () => {
       if (!selectedCity?.id) return [];
       const token = Cookies.get("access_token");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/facilities?city_id=${selectedCity.id}&limit=500`, {
+      const districtParam = selectedDistrict?.id ? `&district_id=${selectedDistrict.id}` : '';
+      const res = await fetch(`${API_BASE}/facilities?city_id=${selectedCity.id}${districtParam}&limit=500`, {
         headers: token ? { "Authorization": `Bearer ${token}` } : {}
       });
       if (!res.ok) throw new Error("Gagal mengambil data fasilitas");
@@ -86,7 +87,7 @@ export default function DashboardPage() {
     queryFn: async () => {
       if (!selectedCity?.id) return null;
       const token = Cookies.get("access_token");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/cities/${selectedCity.id}/boundary`, {
+      const res = await fetch(`${API_BASE}/cities/${selectedCity.id}/boundary`, {
         headers: token ? { "Authorization": `Bearer ${token}` } : {}
       });
       if (!res.ok) return null;
@@ -101,7 +102,7 @@ export default function DashboardPage() {
     queryFn: async () => {
       if (!selectedCity?.id) return null;
       const token = Cookies.get("access_token");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/cities/${selectedCity.id}/districts`, {
+      const res = await fetch(`${API_BASE}/cities/${selectedCity.id}/districts`, {
         headers: token ? { "Authorization": `Bearer ${token}` } : {}
       });
       if (!res.ok) return null;
@@ -119,7 +120,7 @@ export default function DashboardPage() {
   const schoolCount = facilities.filter(f => f.facility_type === 'School').length;
   const hospitalCount = facilities.filter(f => f.facility_type === 'Hospital').length;
   const clinicCount = facilities.filter(f => f.facility_type === 'Clinic').length;
-  const busStopCount = facilities.filter(f => f.facility_type === 'BusStop' || f.facility_type === 'Bus Stop').length;
+  const busStopCount = facilities.filter(f => f.facility_type === 'BusStop').length;
   const parkCount = facilities.filter(f => f.facility_type === 'Park').length;
 
   const score = analytics?.overall_score ?? 0;
@@ -144,16 +145,15 @@ export default function DashboardPage() {
         {/* Card Badge Skor Keadilan Perkotaan */}
         <div className="flex items-center gap-4 bg-card border border-border rounded-xl p-3 shadow-sm">
           <div className="flex flex-col items-end">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Skor Keadilan Perkotaan (UFS)</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Urban fairness score</span>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-extrabold text-foreground tracking-tight">
                 {isLoadingAnalytics ? "..." : (score > 0 ? `${score}/100` : "N/A")}
               </span>
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
-                statusStr === "Baik" ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" :
-                statusStr === "Cukup" ? "bg-amber-500/10 text-amber-600 border border-amber-500/20" :
-                "bg-slate-500/10 text-slate-600 border border-slate-500/20"
-              }`}>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${statusStr === "Baik" ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" :
+                  statusStr === "Cukup" ? "bg-amber-500/10 text-amber-600 border border-amber-500/20" :
+                    "bg-slate-500/10 text-slate-600 border border-slate-500/20"
+                }`}>
                 {statusStr}
               </span>
             </div>
@@ -166,9 +166,8 @@ export default function DashboardPage() {
         {/* Card 1: Penilaian Spasial */}
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-primary uppercase tracking-wider">1. Penilaian Spasial</span>
-              <MapPin className="h-4 w-4 text-primary" />
+            <div className="mb-2">
+              <span className="text-xs font-bold text-primary uppercase tracking-wider">Penilaian Spasial</span>
             </div>
             <h3 className="text-sm font-semibold text-foreground">Kota Yang Dianalisis</h3>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -183,15 +182,14 @@ export default function DashboardPage() {
         {/* Card 2: Indeks Keadilan */}
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">2. Indeks Keadilan</span>
-              <Building2 className="h-4 w-4 text-emerald-600" />
+            <div className="mb-2">
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Indeks Keadilan</span>
             </div>
             <h3 className="text-sm font-semibold text-foreground">Rating UFS: {statusStr}</h3>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
               {score >= 70 ? "Cakupan layanan publik merata di berbagai kecamatan." :
-               score >= 40 ? "Distribusi cukup merata dengan beberapa titik kesenjangan akses." :
-               "Terdapat variasi kesenjangan akses antar kecamatan."}
+                score >= 40 ? "Distribusi cukup merata dengan beberapa titik kesenjangan akses." :
+                  "Terdapat variasi kesenjangan akses antar kecamatan."}
             </p>
           </div>
           <div className="mt-3 pt-2 border-t border-border/60 text-xs font-medium text-muted-foreground">
@@ -202,14 +200,13 @@ export default function DashboardPage() {
         {/* Card 3: Kesenjangan Kritis */}
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">3. Kesenjangan Kritis</span>
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <div className="mb-2">
+              <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Kesenjangan Kritis</span>
             </div>
             <h3 className="text-sm font-semibold text-foreground">Defisit Layanan Terdeteksi</h3>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              {hospitalCount + clinicCount < 5 
-                ? "Defisit fasilitas kesehatan terdeteksi di sektor pemukiman." 
+              {hospitalCount + clinicCount < 5
+                ? "Defisit fasilitas kesehatan terdeteksi di sektor pemukiman."
                 : "Akses halte bus & transportasi perlu diperluas di kecamatan luar."}
             </p>
           </div>
@@ -221,9 +218,8 @@ export default function DashboardPage() {
         {/* Card 4: Rekomendasi Kebijakan */}
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">4. Rekomendasi Kebijakan</span>
-              <Layers className="h-4 w-4 text-blue-600" />
+            <div className="mb-2">
+              <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Rekomendasi Kebijakan</span>
             </div>
             <h3 className="text-sm font-semibold text-foreground">Prioritas Optimasi</h3>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -244,29 +240,27 @@ export default function DashboardPage() {
             {CATEGORIES.map((cat) => {
               const Icon = cat.icon;
               const isActive = activeCategory === cat.id;
-              
+
               let count = facilities.length;
               if (cat.id === "School") count = schoolCount;
               if (cat.id === "Hospital") count = hospitalCount;
               if (cat.id === "Clinic") count = clinicCount;
-              if (cat.id === "Bus Stop") count = busStopCount;
+              if (cat.id === "BusStop") count = busStopCount;
               if (cat.id === "Park") count = parkCount;
 
               return (
                 <button
                   key={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
-                    isActive 
-                      ? `${cat.color} shadow-sm font-semibold` 
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${isActive
+                      ? `${cat.color} shadow-sm font-semibold`
                       : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/50"
-                  }`}
+                    }`}
                 >
                   <Icon className="h-3.5 w-3.5" />
                   <span>{cat.label}</span>
-                  <span className={`px-1.5 py-0.2 text-[10px] rounded-full font-mono ${
-                    isActive ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
-                  }`}>
+                  <span className={`px-1.5 py-0.2 text-[10px] rounded-full font-mono ${isActive ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
+                    }`}>
                     {count}
                   </span>
                 </button>
@@ -295,10 +289,10 @@ export default function DashboardPage() {
               </div>
             </div>
           ) : (
-            <Map 
-              facilities={facilities} 
-              boundary={boundary} 
-              districts={districts} 
+            <Map
+              facilities={facilities}
+              boundary={boundary}
+              districts={districts}
               loading={isLoadingMap}
               activeFilter={activeCategory}
               onSelectFacility={(fac) => setSelectedFacility(fac)}
@@ -323,7 +317,7 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-          <button 
+          <button
             onClick={() => setSelectedFacility(null)}
             className="text-xs font-medium text-muted-foreground hover:text-foreground border border-border px-3 py-1.5 rounded-md hover:bg-muted"
           >
