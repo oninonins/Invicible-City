@@ -1,8 +1,9 @@
 from typing import Any, List, Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.models.facility import Facility
+from app.models.spatial import City, District
 from app.schemas.facility import Facility as FacilitySchema, FacilityCreate
 
 router = APIRouter()
@@ -13,6 +14,13 @@ def create_facility(
     db: Session = Depends(deps.get_db),
     facility_in: FacilityCreate,
 ) -> Any:
+    if facility_in.city_id is not None:
+        if db.query(City.id).filter(City.id == facility_in.city_id).first() is None:
+            raise HTTPException(status_code=404, detail="city_id not found")
+    if facility_in.district_id is not None:
+        if db.query(District.id).filter(District.id == facility_in.district_id).first() is None:
+            raise HTTPException(status_code=404, detail="district_id not found")
+
     geom = f"SRID=4326;POINT({facility_in.lng} {facility_in.lat})"
     facility = Facility(
         name=facility_in.name,
@@ -34,8 +42,8 @@ def create_facility(
 @router.get("/", response_model=List[FacilitySchema])
 def read_facilities(
     db: Session = Depends(deps.get_db),
-    skip: int = 0,
-    limit: int = 100,
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(100, ge=1, le=500, description="Maximum records to return"),
     facility_type: Optional[str] = None,
     city_id: Optional[int] = Query(None, description="Filter by city_id"),
     district_id: Optional[int] = Query(None, description="Filter by district_id"),
@@ -47,5 +55,5 @@ def read_facilities(
         query = query.filter(Facility.city_id == city_id)
     if district_id:
         query = query.filter(Facility.district_id == district_id)
-    facilities = query.offset(skip).limit(limit).all()
+    facilities = query.order_by(Facility.id).offset(skip).limit(limit).all()
     return facilities

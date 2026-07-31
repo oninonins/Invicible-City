@@ -13,16 +13,16 @@ def get_cities(db: Session = Depends(deps.get_db)) -> Any:
     """
     Get all cities for geographic context selection.
     """
-    cities = db.query(City).all()
+    rows = db.query(City.id, City.name).order_by(City.id).all()
     # If no cities exist yet (ETL pending), return a dummy list for MVP
-    if not cities:
+    if not rows:
         return [
             {"id": 3573, "name": "Malang"},
             {"id": 3171, "name": "Jakarta Pusat"},
             {"id": 3273, "name": "Bandung"}
         ]
-        
-    return [{"id": c.id, "name": c.name} for c in cities]
+
+    return [{"id": cid, "name": name} for cid, name in rows]
 
 @router.get("/{city_id}/boundary", response_model=Dict[str, Any])
 def get_city_boundary(city_id: int, db: Session = Depends(deps.get_db)) -> Any:
@@ -51,6 +51,10 @@ def get_city_districts(city_id: int, db: Session = Depends(deps.get_db)) -> Any:
     """
     Get all districts within a city as a GeoJSON FeatureCollection.
     """
+    city_exists = db.query(City.id).filter(City.id == city_id).first()
+    if not city_exists:
+        raise HTTPException(status_code=404, detail="City not found")
+
     results = db.query(
         District.id,
         District.name,
