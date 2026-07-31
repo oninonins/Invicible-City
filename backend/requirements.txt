@@ -1,3 +1,4 @@
+alembic>=1.12.0
 fastapi>=0.100.0
 uvicorn>=0.23.0
 sqlalchemy>=2.0.0
@@ -17,3 +18,8 @@ osmnx>=1.9.0
 shapely>=2.0.0
 tqdm>=4.66.0
 pyrosm>=0.11.0
+
+# Test & lint
+pytest>=7.0.0
+httpx>=0.24.0
+ruff>=0.4.0
