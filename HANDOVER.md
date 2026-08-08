@@ -38,6 +38,44 @@
 
 ## Session Log
 
+### 07 Aug 2026 — Recommendation Engine: Non-Prescriptive Wording + No Data Guard (Approved fixes)
+- **Fix 1 — Wording** (`services/recommendation.py` `INDICATOR_ACTIONS`): Indonesian prescriptive construction ("Tambah sekolah / puskesmas / halte bus / taman") → evidence-bounded English priorities ("Prioritize improving <X> access.").
+- **Fix 2 — No Data guard** (`services/recommendation.py` `generate_recommendations`): bila `city_ufs.status == "No Data"` (total_facilities==0) → early-return `status="No Data"`, `recommendation_available=False`, `priority=[]`, `summary="Insufficient facility data to generate a reliable priority recommendation."`, `narrative=None`. Rule engine SKIP, tak generate deficit/action palsu dari zero tak-grounded. UFS methodology/scoring & ranking algorithm TIDAK diubah. Measured-low district (data ada) tetap generate recommendation.
+- **Schema** (`schemas/recommendation.py`): tambah optional `status: Optional[str]=None`, `recommendation_available: bool=True`. Backward-compatible; frontend tak disentuh.
+- **Verifikasi**: pytest **65/65** (62 + 3 baru: measured-low tetap rec / no-data guard / non-prescriptive wording), ruff clean, frontend `npm run build` lulus.
+- **Live**: 590 Tolikara → recommendation_available=false, priority []; 90 Aceh Barat avail=true ranking deterministik, wording baru benar; 264 Jakarta Selatan avail=true, ranking sehat (0 deficit).**DB integrity**: tak disentuh (facility 77,869 / city 515 / district 7,269 / province 38).
+
+### 07 Aug 2026 — Recommendation Engine QA (Todo) — Verdict PASS WITH ISSUES
+- **QA substantif** (no feature change) utk alur `UFS → deficits → ranking → actions`, 3 tipe kota dari data aktual:
+  - **264** Kota Adm. Jakarta Selatan (data lengkap, UFS 93.3, deficit 0) — #ranking sehat, tak memaksakan rec.
+  - **90** Aceh Barat (UFS 7.9 Critical): deficit 1–5/kecamatan.
+  - **590** Tolikara (0 fasilitas, 46/46 kecamatan zero, status "No Data"): uji sparse.
+- **Validasi lulus**: lexicographic sorting benar (`overall asc → -deficit asc → weakest asc`), `lexicographic_ok=True` 3 kota; repeat identic; **tanpa weighted formula / bobot tambahan** (accessibility murni 1 dari 5 indikator); deficit **0 mismatch** (set indicator + skor) vs data UFS; action vocabulary tertutup (5, tak ada indikator tak dikenal); tak ada klaim kuantitatif (jumlah fasilitas/populasi/travel-time/causal).
+- **Issues (belum di-fix, menunggu approval)**:
+  1. **Wording preskriptif** `INDICATOR_ACTIONS` di `services/recommendation.py` (`"Tambah sekolah / puskesmas / halte bus / taman"`) — menyiratkan keputusan bangun yg tak didukung provision-based data. Rekomendasi: reword non-preskriptif (`"Prioritize improving <X> access."`).
+  2. **No-data vs measured-zero conflated**: kota sparse (590) menghasilkan deficit + action firm walau `status="No Data"`. Rule engine tak bisa bedakan measured-low vs data unavailable; risiko OSM coverage. Butuh guard: jangan jadikan 0 = proof absence.
+- **Integritas DB**: facility 77,869 / city 515 / district 7,269 / province 38 — **tak berubah**. `ufs_indicators` 5. `ufs_scores` 70→**117** (hanya cold compute 590: 1 city + 46 distrik; cache laziness, bukan korupsi).
+- **LLM**: skip (OPENROUTER_API_KEY kosong). QA `llm=false`.
+
+### 07 Aug 2026 — UFS Audit Fixes + AI Recommendation (Rule Engine v1 + OpenRouter LLM opsional)
+- **UFS endpoint audit** (`GET /api/v1/analytics/ufs?city_id=`): verifikasi live (city 90/264 cache hit 485–674ms, 404/422 benar), code review 10 temuan.
+- **Fixes diterapkan**:
+  - `status` sekarang derive dari `category` (`_legacy_status` → Excellent/Good→Good, Fair→Fair, Poor/Critical→Poor); fix mismatch score 65 (dulu category Good + status Fair).
+  - Response tambah field `name` (city/district scope).
+  - Pydantic `schemas/ufs.py` + `response_model=UfsResponse` (OpenAPI typed).
+  - `datetime.utcnow()` → `datetime.now(timezone.utc)`.
+  - Frontend: hapus teks stale "Target Acuan: 20 fasilitas/kecamatan" (dashboard + analysis) → "Median kepadatan nasional".
+  - Cleanup F401 di `core/config.py` (pre-existing).
+- **AI Recommendation (baru)** `GET /api/v1/analytics/recommendations?city_id=&llm=false`:
+  - `services/recommendation.py` — rule-v1 deterministic lexicographic: (1) UFS terendah, (2) jumlah defisit terbanyak (indicator <40), (3) weakest-indicator terendah. Tanpa bobot arbitrer; accessibility TIDAK diberi bobot ekstra (sudah 1 dari 5 indikator).
+  - `ai/base.py` `LLMProvider` ABC + `ai/openrouter.py` `OpenRouterProvider` — `requests` ke `https://openrouter.ai/api/v1/chat/completions`, model dari settings. No key/error → narrative `null` (graceful, jalan tanpa LLM).
+  - Config: `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` (default `meta-llama/llama-3.1-8b-instruct:free`), `OPENROUTER_BASE_URL`. `.env.example` + docker-compose env pass-through.
+  - Prompt framing: provision-based (bukan per-capita), warning accessibility = proxy 1km Euclidean, larang halusinasi data.
+  - Frontend `analysis/page.tsx`: section "Rekomendasi Prioritas" + tombol "Jelaskan dengan AI" (llm=true), loading/empty/error state.
+- **Verifikasi**: ruff clean (file disentuh), pytest **62/62 PASS** (49 + 4 ufs + 9 recommendation), frontend `tsc --noEmit` + `npm run build` lulus, live API verified (ufs name/status, rec rule-v1 ranking deterministik, 404/422, llm fallback null).
+- **DB integrity**: facility 77,869 / city 515 / district 7,269 / province 38 — tidak berubah. `ufs_scores` 70 (cache), `ufs_indicators` 5.
+- **Keputusan ditunda (bukan scope)**: accessibility floor (banyak 0, proxy 1km) — metodologi TETAP, jangan diubah tanpa approval; N+1 cold compute & kNN geography-cast tetap sebagai known limitation.
+
 ### 31 Jul 2026 (Sesi 10) — UFS v0 Implemented
 - **Models** `backend/app/models/ufs.py`: `UfsIndicator` (`ufs_indicators` — indicator, weight 0.2, benchmark_density nullable, reference_km, benchmark_note, updated_at) + `UfsScore` (`ufs_scores` — scope_type `district`|`city`, scope_id, overall_score, category, indicators JSONB, total_facilities, breakdown JSONB, district_count, methodology=`v0-provision`, computed_at, UNIQUE(scope_type, scope_id)).
 - **Migration `0002_ufs`** (down_revision `0001_baseline`); models registered in `alembic/env.py`. Applied to both `sdgs_test` (fresh) and production `sdgs`.

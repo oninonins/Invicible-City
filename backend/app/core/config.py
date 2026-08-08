@@ -1,6 +1,6 @@
-from typing import List, Union
+from typing import List
 
-from pydantic import AnyHttpUrl, validator
+from pydantic import AnyHttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     
     REDIS_HOST: str = "redis"
     REDIS_PORT: str = "6379"
+
+    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_MODEL: str = "meta-llama/llama-3.1-8b-instruct:free"
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
 
     model_config = SettingsConfigDict(case_sensitive=True, env_file=".env")
 

@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 from sqlalchemy import func, text
@@ -38,10 +38,10 @@ def _category(score: float) -> str:
     return "Critical"
 
 
-def _legacy_status(score: float) -> str:
-    if score >= 70:
+def _legacy_status(category: str) -> str:
+    if category in ("Excellent", "Good"):
         return "Good"
-    if score >= 40:
+    if category == "Fair":
         return "Fair"
     return "Poor"
 
@@ -90,7 +90,7 @@ def refresh_benchmarks(db: Session) -> None:
             if ftype in types:
                 densities[key].append(cnt / area)
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     for key in INDICATOR_KEYS:
         if key == "accessibility":
             benchmark = None
@@ -210,7 +210,7 @@ def _upsert_score(db: Session, data: dict[str, Any]) -> UfsScore:
     row.breakdown = data["breakdown"]
     row.district_count = data["district_count"]
     row.methodology = METHODOLOGY
-    row.computed_at = datetime.utcnow()
+    row.computed_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(row)
     return row
@@ -345,10 +345,19 @@ def _build_response(db: Session, row: UfsScore) -> dict[str, Any]:
             }
         ]
 
-    status = "No Data" if row.total_facilities == 0 else _legacy_status(score)
+    status = "No Data" if row.total_facilities == 0 else _legacy_status(row.category)
+    name = db.execute(
+        text(
+            "SELECT name FROM {} WHERE id = :id".format(
+                "city" if row.scope_type == "city" else "district"
+            )
+        ),
+        {"id": row.scope_id},
+    ).scalar()
     return {
         "scope_type": row.scope_type,
         "scope_id": row.scope_id,
+        "name": name,
         "overall_score": round(score, 1),
         "total_facilities": row.total_facilities,
         "breakdown": breakdown,

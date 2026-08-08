@@ -134,3 +134,47 @@ def test_district_ufs_endpoint(client):
     assert body["scope_type"] == "district"
     assert body["scope_id"] == 1
     assert 0 <= body["overall_score"] <= 100
+
+
+def test_status_consistent_with_category(client):
+    body = client.get("/api/v1/analytics/ufs?city_id=1").json()
+    if body["total_facilities"] == 0:
+        assert body["status"] == "No Data"
+    else:
+        expected = (
+            "Good"
+            if body["category"] in ("Excellent", "Good")
+            else "Fair"
+            if body["category"] == "Fair"
+            else "Poor"
+        )
+        assert body["status"] == expected
+
+
+def test_district_status_consistent_with_category(client):
+    body = client.get("/api/v1/analytics/ufs?district_id=1").json()
+    if body["total_facilities"] == 0:
+        assert body["status"] == "No Data"
+    else:
+        expected = (
+            "Good"
+            if body["category"] in ("Excellent", "Good")
+            else "Fair"
+            if body["category"] == "Fair"
+            else "Poor"
+        )
+        assert body["status"] == expected
+
+
+def test_city_response_has_name(client):
+    body = client.get("/api/v1/analytics/ufs?city_id=1").json()
+    assert body["name"] == "City A"
+    assert all(d["name"] for d in body["per_district"])
+
+
+def test_legacy_status_mapping():
+    assert ufs_service._legacy_status("Excellent") == "Good"
+    assert ufs_service._legacy_status("Good") == "Good"
+    assert ufs_service._legacy_status("Fair") == "Fair"
+    assert ufs_service._legacy_status("Poor") == "Poor"
+    assert ufs_service._legacy_status("Critical") == "Poor"

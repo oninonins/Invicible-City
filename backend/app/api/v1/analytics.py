@@ -1,14 +1,17 @@
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.models.spatial import City, District
 from app.models.ufs import UfsIndicator
+from app.schemas.recommendation import RecommendationResponse
+from app.schemas.ufs import UfsResponse
+from app.services import recommendation as recommendation_service
 from app.services import ufs as ufs_service
 
 router = APIRouter()
 
-@router.get("/ufs", response_model=Dict[str, Any])
+@router.get("/ufs", response_model=UfsResponse)
 def get_urban_fairness_score(
     city_id: Optional[int] = Query(None, description="Filter by city_id"),
     district_id: Optional[int] = Query(None, description="Filter by district_id"),
@@ -39,3 +42,18 @@ def get_urban_fairness_score(
         return ufs_service.get_city_ufs(db, city_id)
 
     raise HTTPException(status_code=422, detail="city_id or district_id is required")
+
+
+@router.get("/recommendations", response_model=RecommendationResponse)
+def get_recommendations(
+    city_id: int = Query(..., description="Filter by city_id"),
+    llm: bool = Query(False, description="Include optional LLM narrative"),
+    db: Session = Depends(deps.get_db),
+) -> Any:
+    """
+    Generate priority recommendations from the rule engine (deterministic,
+    lexicographic ranking). Optional LLM narrative via OpenRouter when llm=true.
+    """
+    if db.query(City.id).filter(City.id == city_id).first() is None:
+        raise HTTPException(status_code=404, detail="City not found")
+    return recommendation_service.generate_recommendations(db, city_id, llm=llm)

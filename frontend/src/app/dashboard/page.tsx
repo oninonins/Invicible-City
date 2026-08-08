@@ -193,7 +193,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="mt-3 pt-2 border-t border-border/60 text-xs font-medium text-muted-foreground">
-            Target Acuan: <strong className="text-foreground">20 fasilitas / kecamatan</strong>
+            Benchmark: <strong className="text-foreground">Median kepadatan nasional</strong>
           </div>
         </div>
 
@@ -280,13 +280,10 @@ export default function DashboardPage() {
               <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center mb-4">
                 <MapPin className="h-7 w-7 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-bold text-foreground">Tidak Ada Data Spasial</h3>
+              <h3 className="text-lg font-bold text-foreground">Data belum tersedia</h3>
               <p className="text-sm text-muted-foreground max-w-md mt-2">
-                Data spasial dan fasilitas publik untuk <strong className="text-foreground">{selectedCity?.name}</strong> belum di-import ke dalam database spasial.
+                Fasilitas publik untuk <strong className="text-foreground">{selectedCity?.name || "wilayah ini"}</strong> belum tersedia untuk wilayah ini. Pilih wilayah lain untuk melanjutkan eksplorasi.
               </p>
-              <div className="mt-4 p-3 bg-muted/40 border border-border rounded-lg text-xs font-mono text-muted-foreground max-w-lg">
-                Jalankan: <code>docker exec sdgs-backend-1 python scripts/import_facilities.py --types School Hospital Clinic BusStop Park</code>
-              </div>
             </div>
           ) : (
             <Map

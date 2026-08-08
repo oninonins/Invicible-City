@@ -163,9 +163,9 @@ export default function MapPage() {
         ) : isEmpty ? (
           <div className="h-full w-full rounded-xl border border-border bg-card p-8 flex flex-col items-center justify-center text-center shadow-sm">
             <MapPin className="h-12 w-12 text-muted-foreground mb-3" />
-            <h3 className="text-lg font-bold text-foreground">Tidak Ada Data Spasial</h3>
+            <h3 className="text-lg font-bold text-foreground">Data belum tersedia</h3>
             <p className="text-sm text-muted-foreground max-w-md mt-1">
-              Data fasilitas dan batas wilayah untuk <strong className="text-foreground">{selectedCity?.name}</strong> belum di-import ke database spasial.
+              Fasilitas publik untuk <strong className="text-foreground">{selectedCity?.name || "wilayah ini"}</strong> belum tersedia untuk wilayah ini. Pilih wilayah lain untuk melanjutkan eksplorasi.
             </p>
           </div>
         ) : (
