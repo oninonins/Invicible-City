@@ -30,6 +30,7 @@ backend/scripts/exp3_jkt.py
 backend/scripts/poc_pyrosm.py
 backend/scripts/preprocess_dmxsan.py
 backend/scripts/prep_boundary.py
+backend/download_pbf.py
 
 # Raw data — too large for git
 backend/data/
