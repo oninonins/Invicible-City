@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8 # 8 days
 
+    DATABASE_URL: str = ""
     POSTGRES_SERVER: str = "db"
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "password"
