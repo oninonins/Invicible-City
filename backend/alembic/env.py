@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.config import settings
 from app.db.base import Base
+from app.db.session import normalize_database_url
 # Model imports register tables into Base.metadata for autogenerate (intentionally unused).
 from app.models.etl import DatasetMetadata, ETLJob  # noqa: F401
 from app.models.facility import Facility  # noqa: F401
@@ -23,7 +24,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 if settings.DATABASE_URL:
-    SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
+    SQLALCHEMY_DATABASE_URL = normalize_database_url(settings.DATABASE_URL)
 else:
     SQLALCHEMY_DATABASE_URL = (
         f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}"
