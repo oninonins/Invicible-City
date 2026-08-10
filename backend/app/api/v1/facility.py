@@ -6,7 +6,7 @@ from app.models.facility import Facility
 from app.models.spatial import City, District
 from app.schemas.facility import Facility as FacilitySchema, FacilityCreate
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(deps.get_current_active_user)])
 
 @router.post("/", response_model=FacilitySchema)
 def create_facility(

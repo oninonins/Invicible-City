@@ -12,6 +12,7 @@ from app.main import app
 from app.models.facility import Facility
 from app.models.spatial import City, District, Province
 from app.models.ufs import UfsIndicator, UfsScore  # noqa: F401  (register in Base.metadata)
+from app.models.user import User
 
 TEST_DB_NAME = "sdgs_test"
 
@@ -61,10 +62,39 @@ def client(api_session) -> Generator[TestClient, None, None]:
     def override_get_db() -> Generator[Session, None, None]:
         yield api_session
 
+    def override_get_current_user():
+        return User(
+            id=1,
+            email="dummy@example.com",
+            full_name="Dummy",
+            hashed_password="x",
+            is_active=True,
+            is_superuser=False,
+        )
+
+    app.dependency_overrides[deps.get_db] = override_get_db
+    app.dependency_overrides[deps.get_current_user] = override_get_current_user
+    app.dependency_overrides[deps.get_current_active_user] = override_get_current_user
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides.pop(deps.get_db, None)
+    app.dependency_overrides.pop(deps.get_current_user, None)
+    app.dependency_overrides.pop(deps.get_current_active_user, None)
+
+
+@pytest.fixture()
+def auth_client(test_engine) -> Generator[TestClient, None, None]:
+    factory = sessionmaker(bind=test_engine, autocommit=False, autoflush=False)
+    session = factory()
+
+    def override_get_db() -> Generator[Session, None, None]:
+        yield session
+
     app.dependency_overrides[deps.get_db] = override_get_db
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.pop(deps.get_db, None)
+    session.close()
 
 
 @pytest.fixture()

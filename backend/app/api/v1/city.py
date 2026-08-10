@@ -6,7 +6,7 @@ from app.api import deps
 from sqlalchemy import func
 from app.models.spatial import City, District
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(deps.get_current_active_user)])
 
 @router.get("/", response_model=List[Dict[str, Any]])
 def get_cities(db: Session = Depends(deps.get_db)) -> Any:

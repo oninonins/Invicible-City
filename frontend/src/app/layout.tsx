@@ -19,6 +19,10 @@ export const metadata: Metadata = {
     template: "%s — Invisible City",
   },
   description: "AI-Powered Urban Accessibility Intelligence Platform",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({

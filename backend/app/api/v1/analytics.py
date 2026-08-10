@@ -9,7 +9,7 @@ from app.schemas.ufs import UfsResponse
 from app.services import recommendation as recommendation_service
 from app.services import ufs as ufs_service
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(deps.get_current_active_user)])
 
 @router.get("/ufs", response_model=UfsResponse)
 def get_urban_fairness_score(

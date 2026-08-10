@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Cookies from "js-cookie";
@@ -24,13 +24,6 @@ export default function DashboardClientLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // Set demo token secara non-blocking — layout langsung dirender
-  useEffect(() => {
-    if (!Cookies.get("access_token")) {
-      Cookies.set("access_token", "demo_guest_token", { expires: 1 });
-    }
-  }, []);
 
   const handleLogout = () => {
     Cookies.remove("access_token");

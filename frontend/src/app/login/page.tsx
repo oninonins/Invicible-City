@@ -102,6 +102,13 @@ export default function LoginPage() {
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
+
+        <p className="text-sm text-muted-foreground text-center mt-6">
+          Belum punya akun?{" "}
+          <Link href="/register" className="text-primary font-medium hover:underline">
+            Daftar
+          </Link>
+        </p>
       </div>
     </div>
   );
