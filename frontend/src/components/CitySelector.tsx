@@ -28,7 +28,7 @@ export default function CitySelector() {
       setLoadingCities(true);
       try {
         const token = Cookies.get("access_token");
-        const response = await fetch(`${API_BASE}/cities`, {
+        const response = await fetch(`${API_BASE}/cities/`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (response.ok) {
