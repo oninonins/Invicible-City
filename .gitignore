@@ -36,8 +36,9 @@ backend/download_pbf.py
 backend/data/
 data/
 
-# Database dumps — too large for git
+# Database dumps
 *.dump
+*.sql
 
 # External git repos (cloned manually, not submodules)
 New folder/

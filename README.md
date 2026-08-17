@@ -21,9 +21,7 @@ Instead of just showing where facilities are located, the platform answers:
 * **Urban Fairness Score (UFS)**: Calculate a public service equity score (0-100) for specific areas based on indicators like education, healthcare, and transport.
 * **AI Recommendation Engine**: Generate infrastructure recommendations based on spatial analysis and UFS.
 * **Priority Ranking**: Identify the top areas that require immediate infrastructure investment.
-* **Urban Impact Simulator**: Simulate the impact of constructing new public facilities on the UFS and travel time.
 * **Analytics Dashboard**: City-level analytics on average UFS, accessibility trends, and facility distribution.
-* **Export Report**: Generate executive PDF reports containing maps, AI recommendations, and priority rankings.
 
 ## 🛠️ Technology Stack
 * **Frontend**: Next.js 15, TypeScript, Tailwind CSS, Leaflet/MapLibre
